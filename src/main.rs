@@ -1,133 +1,78 @@
 #![windows_subsystem = "windows"]
 
+use include_dir::{include_dir, Dir};
 use nightshade::prelude::*;
-#[cfg(not(target_arch = "wasm32"))]
-use std::collections::HashSet;
+use std::thread;
+use tiny_http::{Header, Response, Server};
+use web_host_protocol::{BackendEvent, FrontendCommand};
 
-#[cfg(not(target_arch = "wasm32"))]
-mod static_server;
-#[cfg(not(target_arch = "wasm32"))]
-mod webview_manager;
+mod context;
 
-#[cfg(not(target_arch = "wasm32"))]
-use web_host_protocol::{BackendEvent, BackendMessage, FrontendCommand, FrontendMessage};
+static DIST: Dir = include_dir!("$CARGO_MANIFEST_DIR/leptos-site/dist");
+
+fn start_server() -> u16 {
+    let server = Server::http("127.0.0.1:0").expect("server");
+    let port = server.server_addr().to_ip().unwrap().port();
+    thread::spawn(move || {
+        for req in server.incoming_requests() {
+            let path = req.url().trim_start_matches('/');
+            let path = if path.is_empty() { "index.html" } else { path };
+            let file = DIST.get_file(path).or_else(|| DIST.get_file("index.html")).unwrap();
+            let mime = match path.rsplit('.').next() {
+                Some("html") => "text/html",
+                Some("js") => "application/javascript",
+                Some("wasm") => "application/wasm",
+                Some("css") => "text/css",
+                _ => "application/octet-stream",
+            };
+            let _ = req.respond(Response::from_data(file.contents())
+                .with_header(Header::from_bytes("Content-Type", mime).unwrap()));
+        }
+    });
+    port
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    launch(WebHost::default())?;
+    launch(WebHost { port: start_server(), ctx: context::WebviewContext::default(), connected: false })?;
     Ok(())
 }
 
 struct WebHost {
-    web_widget_id: String,
-    #[cfg(not(target_arch = "wasm32"))]
-    server_port: u16,
-    #[cfg(not(target_arch = "wasm32"))]
-    webview_manager: webview_manager::WebviewManager,
-}
-
-impl Default for WebHost {
-    fn default() -> Self {
-        #[cfg(not(target_arch = "wasm32"))]
-        let server_port = static_server::start_server();
-
-        Self {
-            web_widget_id: uuid::Uuid::new_v4().to_string(),
-            #[cfg(not(target_arch = "wasm32"))]
-            server_port,
-            #[cfg(not(target_arch = "wasm32"))]
-            webview_manager: webview_manager::WebviewManager::default(),
-        }
-    }
+    port: u16,
+    ctx: context::WebviewContext,
+    connected: bool,
 }
 
 impl State for WebHost {
-    fn title(&self) -> &str {
-        "Nightshade Web Host"
-    }
+    fn title(&self) -> &str { "Nightshade Web Host" }
 
     fn initialize(&mut self, world: &mut World) {
         world.resources.user_interface.enabled = true;
     }
 
-    fn ui(&mut self, world: &mut World, ui_context: &egui::Context) {
-        #[cfg(not(target_arch = "wasm32"))]
-        self.process_frontend_messages();
-
-        egui::CentralPanel::default()
-            .frame(egui::Frame::NONE)
-            .show(ui_context, |ui| {
-                let rect = ui.available_rect_before_wrap();
-
-                ui.painter()
-                    .rect_filled(rect, 0.0, ui.style().visuals.panel_fill);
-
-                #[cfg(target_arch = "wasm32")]
-                {
-                    ui.centered_and_justified(|ui| {
-                        ui.label("Web widget is unavailable on wasm");
-                    });
+    fn ui(&mut self, world: &mut World, ctx: &egui::Context) {
+        for cmd in self.ctx.drain_messages() {
+            match cmd {
+                FrontendCommand::Ready => {
+                    self.ctx.send(BackendEvent::Connected);
+                    self.connected = true;
                 }
-
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    if let Some(window_handle) = &world.resources.window.handle {
-                        self.webview_manager.set_window(window_handle.clone());
-                    }
-
-                    let scale_factor = ui_context.pixels_per_point();
-                    let mut active_ids: HashSet<String> = HashSet::new();
-                    active_ids.insert(self.web_widget_id.clone());
-
-                    self.webview_manager.retain_only(&active_ids);
-
-                    let url = format!("http://127.0.0.1:{}", self.server_port);
-
-                    if !self.webview_manager.has_webview(&self.web_widget_id) {
-                        self.webview_manager.create_webview(
-                            self.web_widget_id.clone(),
-                            &url,
-                            rect,
-                            scale_factor,
-                        );
-                    }
-
-                    self.webview_manager
-                        .update_position(&self.web_widget_id, rect, scale_factor);
-
-                    self.webview_manager.ensure_all_visible();
+                FrontendCommand::RequestRandomNumber { request_id } => {
+                    self.ctx.send(BackendEvent::RandomNumber { request_id, value: rand::random() });
                 }
-            });
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-impl WebHost {
-    fn process_frontend_messages(&mut self) {
-        for (webview_id, message) in self.webview_manager.drain_messages() {
-            self.handle_frontend_message(&webview_id, message);
-        }
-    }
-
-    fn handle_frontend_message(&mut self, webview_id: &str, message: FrontendMessage) {
-        match message {
-            FrontendMessage::Command(command) => self.handle_frontend_command(webview_id, command),
-            FrontendMessage::Event(_) => {}
-        }
-    }
-
-    fn handle_frontend_command(&mut self, webview_id: &str, command: FrontendCommand) {
-        match command {
-            FrontendCommand::Ready => {
-                self.webview_manager
-                    .send_message(webview_id, &BackendMessage::Event(BackendEvent::Connected));
             }
-            FrontendCommand::RequestRandomNumber { request_id } => {
-                let value = rand::random::<u32>();
-                self.webview_manager.send_message(
-                    webview_id,
-                    &BackendMessage::Event(BackendEvent::RandomNumber { request_id, value }),
-                );
+        }
+
+        egui::CentralPanel::default().frame(egui::Frame::NONE).show(ctx, |ui| {
+            let rect = ui.available_rect_before_wrap();
+            ui.painter().rect_filled(rect, 0.0, ui.style().visuals.panel_fill);
+            if let Some(handle) = &world.resources.window.handle {
+                self.ctx.ensure_webview(handle.clone(), self.port, rect);
             }
+        });
+
+        if !self.connected {
+            ctx.request_repaint();
         }
     }
 }

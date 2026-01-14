@@ -10,6 +10,7 @@ fn main() {
     println!("cargo:rerun-if-changed=leptos-site/index.html");
     println!("cargo:rerun-if-changed=leptos-site/Cargo.toml");
     println!("cargo:rerun-if-changed=leptos-site/public");
+    println!("cargo:rerun-if-changed=leptos-site/dist");
 
     if !leptos_site_dir.exists() {
         panic!("leptos-site directory not found at {:?}", leptos_site_dir);

@@ -1,5 +1,5 @@
 use leptos::prelude::*;
-use web_host_protocol::{BackendEvent, BackendMessage, FrontendCommand};
+use web_host_protocol::{BackendEvent, FrontendCommand};
 
 pub mod bridge;
 
@@ -10,22 +10,15 @@ pub fn App() -> impl IntoView {
     let (log_entries, set_log_entries) = signal(Vec::<String>::new());
 
     Effect::new(move |_| {
-        bridge::set_backend_message_handler(move |message| match message {
-            BackendMessage::Event(BackendEvent::Connected) => {
+        bridge::set_backend_handler(move |event| match event {
+            BackendEvent::Connected => {
                 set_connected.set(true);
-                set_log_entries.update(|entries| {
-                    entries.push("Backend connected".to_string());
-                });
+                set_log_entries.update(|e| e.push("Backend connected".to_string()));
             }
-            BackendMessage::Event(BackendEvent::RandomNumber { request_id, value }) => {
-                set_log_entries.update(|entries| {
-                    entries.push(format!("Request #{}: {}", request_id, value));
-                });
+            BackendEvent::RandomNumber { request_id, value } => {
+                set_log_entries.update(|e| e.push(format!("Request #{request_id}: {value}")));
             }
-            BackendMessage::Command(_) => {}
         });
-
-        bridge::send_command(FrontendCommand::Ready);
     });
 
     let request_random = move |_| {
