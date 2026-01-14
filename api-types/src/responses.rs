@@ -12,12 +12,6 @@ pub struct ApiListResponse<T> {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct ApiErrorResponse {
-    pub error: String,
-    pub code: String,
-}
-
-#[derive(Clone, Serialize, Deserialize)]
 pub struct HealthResponse {
     pub status: String,
     pub version: String,
