@@ -8,7 +8,7 @@ use web_host_protocol::{BackendEvent, FrontendCommand};
 
 mod context;
 
-static DIST: Dir = include_dir!("$CARGO_MANIFEST_DIR/leptos-site/dist");
+static DIST: Dir = include_dir!("$CARGO_MANIFEST_DIR/site/dist");
 
 fn start_server() -> u16 {
     let server = Server::http("127.0.0.1:0").expect("server");

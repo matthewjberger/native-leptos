@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["."]
-exclude = ["leptos-site", "protocol"]
+exclude = ["site", "protocol"]
 
 [package]
 name = "native-leptos"

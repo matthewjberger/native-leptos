@@ -23,7 +23,7 @@ A native desktop application that hosts a WebView with bidirectional IPC communi
 
 - `src/` - Native Rust backend
 - `protocol/` - Shared message types (used by both native and WASM)
-- `leptos-site/` - Leptos frontend compiled to WASM
+- `site/` - Leptos frontend compiled to WASM
 
 ## Communication
 
