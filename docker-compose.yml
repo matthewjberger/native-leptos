@@ -1,0 +1,17 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+      args:
+        DATABASE_BACKEND: sqlite
+    ports:
+      - "3000:8080"
+    volumes:
+      - api-data:/app/data
+    environment:
+      - RUST_LOG=info
+      - AUTH_ENABLED=false
+
+volumes:
+  api-data:

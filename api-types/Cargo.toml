@@ -1,0 +1,13 @@
+[package]
+name = "api_types"
+version = "0.1.0"
+authors = ["Matthew Berger <matthewjordanberger@gmail.com>"]
+description = "Shared API types for native-leptos"
+license = "MIT OR Apache-2.0"
+edition = "2024"
+rust-version = "1.90"
+
+[workspace]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }

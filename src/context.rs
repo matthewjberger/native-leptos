@@ -1,14 +1,17 @@
 use nightshade::prelude::{egui, window};
-use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
+use std::sync::mpsc::{Receiver, Sender, channel};
 use web_host_protocol::{BackendEvent, FrontendCommand};
-use wry::dpi::{LogicalPosition, LogicalSize, PhysicalSize};
+use wry::dpi::{LogicalPosition, LogicalSize};
 use wry::{Rect, WebView, WebViewBuilder};
 
 const INIT_SCRIPT: &str = "window.onBackendMessage=function(d){window.__h&&window.__h(d)};";
 
 fn rect(x: f64, y: f64, w: f64, h: f64) -> Rect {
-    Rect { position: LogicalPosition::new(x, y).into(), size: LogicalSize::new(w, h).into() }
+    Rect {
+        position: LogicalPosition::new(x, y).into(),
+        size: LogicalSize::new(w, h).into(),
+    }
 }
 
 pub struct WebviewContext {
@@ -21,13 +24,28 @@ pub struct WebviewContext {
 impl Default for WebviewContext {
     fn default() -> Self {
         let (tx, rx) = channel();
-        Self { webview: None, bounds: (0.0, 0.0, 0.0, 0.0), tx, rx }
+        Self {
+            webview: None,
+            bounds: (0.0, 0.0, 0.0, 0.0),
+            tx,
+            rx,
+        }
     }
 }
 
 impl WebviewContext {
-    pub fn ensure_webview(&mut self, window: Arc<window::Window>, port: u16, r: egui::Rect) -> bool {
-        let b = (r.min.x as f64, r.min.y as f64, r.width() as f64, r.height() as f64);
+    pub fn ensure_webview(
+        &mut self,
+        window: Arc<window::Window>,
+        port: u16,
+        r: egui::Rect,
+    ) -> bool {
+        let b = (
+            r.min.x as f64,
+            r.min.y as f64,
+            r.width() as f64,
+            r.height() as f64,
+        );
 
         if let Some(wv) = &self.webview {
             if self.bounds != b {
@@ -44,7 +62,9 @@ impl WebviewContext {
             .with_navigation_handler(|_| true)
             .with_initialization_script(INIT_SCRIPT)
             .with_ipc_handler(move |r| {
-                if let Some(c) = FrontendCommand::from_base64(r.body()) { let _ = tx.send(c); }
+                if let Some(c) = FrontendCommand::from_base64(r.body()) {
+                    let _ = tx.send(c);
+                }
             })
             .build_as_child(window.as_ref())
         {
@@ -52,9 +72,6 @@ impl WebviewContext {
             let _ = wv.focus();
             self.bounds = b;
             self.webview = Some(wv);
-            let size = window.inner_size();
-            let _ = window.request_inner_size(PhysicalSize::new(size.width + 1, size.height));
-            let _ = window.request_inner_size(size);
             return true;
         }
         false
@@ -66,5 +83,7 @@ impl WebviewContext {
         }
     }
 
-    pub fn drain_messages(&self) -> impl Iterator<Item = FrontendCommand> + '_ { self.rx.try_iter() }
+    pub fn drain_messages(&self) -> impl Iterator<Item = FrontendCommand> + '_ {
+        self.rx.try_iter()
+    }
 }

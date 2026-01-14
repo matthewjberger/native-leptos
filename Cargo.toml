@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["."]
-exclude = ["site", "protocol"]
+exclude = ["site", "protocol", "api", "api-types"]
 
 [package]
 name = "native-leptos"
@@ -19,7 +19,7 @@ path = "src/main.rs"
 [dependencies]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-nightshade = { version = "0.6.55", features = ["egui"] }
+nightshade = { version = "0.6.57", features = ["egui"] }
 wry = "0.53.5"
 include_dir = "0.7.4"
 tiny_http = "0.12.0"
