@@ -18,6 +18,7 @@ js-sys = "0.3"
 web-sys = { version = "0.3", features = ["Window", "Document", "HtmlElement", "Storage", "DomTokenList", "Location", "Element", "Event", "MouseEvent", "NodeList", "DomRect", "KeyboardEvent", "Request", "RequestInit", "RequestMode", "Response", "Headers"] }
 web_host_protocol = { path = "../protocol" }
 api_types = { path = "../api-types" }
+ui = { path = "../ui" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 wasm-bindgen-futures = "0.4"

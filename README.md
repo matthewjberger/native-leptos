@@ -17,58 +17,84 @@ A native desktop application that hosts a WebView with bidirectional IPC communi
 │  │               │    │  └────────────────────────┘  │  │
 │  └───────────────┘    └──────────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────┐
-│                    API Server (Optional)                 │
-│  ┌───────────────┐    ┌──────────────────────────────┐  │
-│  │     Axum      │    │      SQLite / Postgres       │  │
-│  │  REST API     │◄──►│      (via sqlx)              │  │
-│  │               │    │                              │  │
-│  │  Auth-ready   │    │  Local: SQLite file          │  │
-│  │  middleware   │    │  Cloud: Postgres (RDS, etc)  │  │
-│  └───────────────┘    └──────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
 ```
 
-## Structure
+## Project Structure
 
-- `src/` - Native Rust backend
-- `protocol/` - Shared IPC message types (used by both native and WASM)
-- `site/` - Leptos frontend compiled to WASM
-- `api/` - Axum REST API server (deployable to AWS)
-- `api-types/` - Shared API types (used by frontend and API server)
+```
+native-leptos/
+├── src/                    # Native desktop app (Nightshade + wry)
+├── site/                   # Leptos frontend (WASM)
+├── ui/                     # Shared UI component library
+├── component-gallery/      # Storybook-style component showcase
+├── protocol/               # Shared IPC message types
+├── api/                    # Axum REST API server
+└── api-types/              # Shared API types
+```
 
-## Communication
+## Quick Start
 
-Bidirectional IPC using:
-- **Serialization**: postcard (binary, compact)
-- **Transport**: base64 over wry's native IPC (faster than WebSockets)
+### Prerequisites
 
-## Building
+- Rust 1.90+
+- [Trunk](https://trunkrs.dev/) - `cargo install trunk`
+- [just](https://github.com/casey/just) - `cargo install just`
+- Node.js (for Tailwind CSS in component-gallery)
+
+### Running the Desktop App
 
 ```bash
-# Build the frontend (WASM)
-just build-frontend
-
-# Build and run the app
 just run
 ```
 
-## API Server
-
-The `api/` crate provides a REST API that can run locally or deploy to cloud infrastructure.
-
-### Local Development
+### Running the Component Gallery
 
 ```bash
-# Run with Docker
-docker-compose up --build
-
-# Or run directly
-cd api && cargo run
+cd component-gallery
+just setup    # First time only
+just serve
 ```
 
-The API server runs on `http://127.0.0.1:3000` by default.
+The gallery will be available at http://localhost:8080
+
+### Running the Site (standalone)
+
+```bash
+cd site
+just serve
+```
+
+### Running the API Server
+
+```bash
+cd api
+cargo run
+```
+
+## UI Component Library
+
+The `ui/` crate provides shared components:
+
+- **Buttons**: Button, IconButton, NavButton, SelectButton
+- **Icons**: CheckIcon, CloseIcon, BackArrowIcon, MenuIcon, etc.
+- **Dialog**: Modal dialogs (Info, Warning, Danger)
+- **Toast**: Notifications (Success, Warning, Info, Error)
+- **Toggle**: Toggle switches and ToggleGroup
+
+### Usage
+
+```rust
+use ui::*;
+
+view! {
+    <Button variant=ButtonVariant::Primary>"Click me"</Button>
+    <Dialog visible=show_dialog dialog_type=Signal::derive(|| DialogType::Warning)>
+        <p>"Warning message"</p>
+    </Dialog>
+}
+```
+
+## API Server
 
 ### Endpoints
 
@@ -83,33 +109,10 @@ The API server runs on `http://127.0.0.1:3000` by default.
 
 ### Configuration
 
-Environment variables (see `api/.env.example`):
 - `BIND_ADDRESS` - Server address (default: `0.0.0.0:8080`)
 - `DATABASE_URL` - SQLite path or Postgres connection string
 - `AUTH_ENABLED` - Enable auth middleware (default: `false`)
 
-### Cloud Deployment
-
-```bash
-docker build -f api/Dockerfile -t native-leptos-api .
-# Deploy to ECS/Fargate/App Runner
-# Set DATABASE_URL to RDS Postgres
-# Set AUTH_ENABLED=true when ready
-```
-
-## Requirements
-
-- Rust 1.90+
-- [Trunk](https://trunkrs.dev/) for building the WASM frontend
-- Docker (optional, for running API locally)
-
 ## License
 
-This project is free, open source and permissively licensed! All code in this repository is dual-licensed under either:
-
-* MIT License ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
-* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-
-at your option.
-
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this project by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
+Dual-licensed under MIT or Apache-2.0.

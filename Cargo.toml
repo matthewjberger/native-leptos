@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["."]
-exclude = ["site", "protocol", "api", "api-types"]
+exclude = ["site", "protocol", "api", "api-types", "ui", "component-gallery"]
 
 [package]
 name = "native-leptos"

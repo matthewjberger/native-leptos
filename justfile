@@ -1,38 +1,17 @@
-# Build the Leptos frontend
-build-frontend:
-    cd site && trunk build --release
+set windows-shell := ["powershell.exe"]
 
-# Build the native app
-build: build-frontend
-    cargo build --release
+# Run desktop app
+[working-directory: 'site']
+run:
+  trunk build --release
+  cargo run --manifest-path ../Cargo.toml
 
-# Run the app (builds frontend first)
-run: build-frontend
-    cargo run
+# Run component gallery
+[working-directory: 'component-gallery']
+gallery:
+  trunk serve
 
-# Run the app in release mode
-run-release: build
-    cargo run --release
-
-# Check the native app
-check:
-    cargo check
-
-# Clean all build artifacts
-clean:
-    cargo clean
-    cd site && trunk clean
-
-# Watch and rebuild frontend on changes
-watch-frontend:
-    cd site && trunk watch
-
-# Format all code
-fmt:
-    cargo fmt
-    cd site && cargo fmt
-
-# Run clippy
-lint:
-    cargo clippy
-    cd site && cargo clippy
+# Run API
+[working-directory: 'api']
+api:
+  cargo run
