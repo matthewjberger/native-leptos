@@ -1,6 +1,6 @@
+use axum::Json;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::Json;
 use serde_json::json;
 
 #[derive(thiserror::Error, Debug)]
@@ -17,6 +17,10 @@ impl IntoResponse for ApiError {
             ApiError::NotFound => (StatusCode::NOT_FOUND, "NOT_FOUND"),
             ApiError::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, "DATABASE_ERROR"),
         };
-        (status, Json(json!({ "error": self.to_string(), "code": code }))).into_response()
+        (
+            status,
+            Json(json!({ "error": self.to_string(), "code": code })),
+        )
+            .into_response()
     }
 }

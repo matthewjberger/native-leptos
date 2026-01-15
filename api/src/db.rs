@@ -1,7 +1,7 @@
 use crate::error::ApiError;
 use api_types::resources::{CreateResource, Resource, UpdateResource};
-use sqlx::sqlite::{SqlitePool, SqlitePoolOptions, SqliteRow};
 use sqlx::Row;
+use sqlx::sqlite::{SqlitePool, SqlitePoolOptions, SqliteRow};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn row_to_resource(row: SqliteRow) -> Resource {
@@ -58,12 +58,14 @@ impl SqliteDatabase {
     }
 
     pub async fn get_resource(&self, id: &str) -> Result<Option<Resource>, ApiError> {
-        sqlx::query("SELECT id, name, description, created_at, updated_at FROM resources WHERE id = ?")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
-            .map_err(db_err)
-            .map(|row| row.map(row_to_resource))
+        sqlx::query(
+            "SELECT id, name, description, created_at, updated_at FROM resources WHERE id = ?",
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(db_err)
+        .map(|row| row.map(row_to_resource))
     }
 
     pub async fn create_resource(&self, input: CreateResource) -> Result<Resource, ApiError> {
@@ -78,10 +80,16 @@ impl SqliteDatabase {
             .execute(&self.pool)
             .await
             .map_err(db_err)?;
-        self.get_resource(&id).await?.ok_or_else(|| ApiError::Database("Insert failed".to_string()))
+        self.get_resource(&id)
+            .await?
+            .ok_or_else(|| ApiError::Database("Insert failed".to_string()))
     }
 
-    pub async fn update_resource(&self, id: &str, input: UpdateResource) -> Result<Option<Resource>, ApiError> {
+    pub async fn update_resource(
+        &self,
+        id: &str,
+        input: UpdateResource,
+    ) -> Result<Option<Resource>, ApiError> {
         let result = sqlx::query("UPDATE resources SET name = COALESCE(?, name), description = COALESCE(?, description), updated_at = ? WHERE id = ?")
             .bind(&input.name)
             .bind(&input.description)
@@ -90,7 +98,9 @@ impl SqliteDatabase {
             .execute(&self.pool)
             .await
             .map_err(db_err)?;
-        if result.rows_affected() == 0 { return Ok(None); }
+        if result.rows_affected() == 0 {
+            return Ok(None);
+        }
         self.get_resource(id).await
     }
 
@@ -110,5 +120,9 @@ fn generate_id() -> String {
 }
 
 fn now_secs() -> String {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs().to_string()
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+        .to_string()
 }

@@ -56,9 +56,7 @@ pub fn set_backend_handler(handler: impl Fn(BackendEvent) + 'static) {
         }
     }) as Box<dyn Fn()>);
 
-    let _ = window.set_interval_with_callback_and_timeout_and_arguments_0(
-        poll.as_ref().unchecked_ref(),
-        50,
-    );
+    let _ = window
+        .set_interval_with_callback_and_timeout_and_arguments_0(poll.as_ref().unchecked_ref(), 50);
     poll.forget();
 }

@@ -22,6 +22,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr: std::net::SocketAddr = config.bind_address.parse()?;
     tracing::info!("Starting server on {addr}");
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, router::create_router(state::AppState { database, config })).await?;
+    axum::serve(
+        listener,
+        router::create_router(state::AppState { database, config }),
+    )
+    .await?;
     Ok(())
 }

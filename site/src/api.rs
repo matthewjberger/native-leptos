@@ -7,14 +7,27 @@ use web_sys::{Request, RequestInit, RequestMode, Response};
 const API_BASE: &str = "http://localhost:3000";
 
 pub async fn list_resources() -> Result<Vec<Resource>, String> {
-    let response = fetch_json::<ApiListResponse<Resource>>(&format!("{API_BASE}/api/v1/resources"), "GET", None).await?;
+    let response = fetch_json::<ApiListResponse<Resource>>(
+        &format!("{API_BASE}/api/v1/resources"),
+        "GET",
+        None,
+    )
+    .await?;
     Ok(response.data)
 }
 
-pub async fn create_resource(name: String, description: Option<String>) -> Result<Resource, String> {
+pub async fn create_resource(
+    name: String,
+    description: Option<String>,
+) -> Result<Resource, String> {
     let body = serde_json::to_string(&CreateResource { name, description })
         .map_err(|error| error.to_string())?;
-    let response = fetch_json::<ApiResponse<Resource>>(&format!("{API_BASE}/api/v1/resources"), "POST", Some(body)).await?;
+    let response = fetch_json::<ApiResponse<Resource>>(
+        &format!("{API_BASE}/api/v1/resources"),
+        "POST",
+        Some(body),
+    )
+    .await?;
     Ok(response.data)
 }
 
@@ -23,7 +36,11 @@ pub async fn delete_resource(id: &str) -> Result<(), String> {
     Ok(())
 }
 
-async fn fetch_json<T: serde::de::DeserializeOwned>(url: &str, method: &str, body: Option<String>) -> Result<T, String> {
+async fn fetch_json<T: serde::de::DeserializeOwned>(
+    url: &str,
+    method: &str,
+    body: Option<String>,
+) -> Result<T, String> {
     let text = fetch(url, method, body).await?;
     serde_json::from_str(&text).map_err(|error| error.to_string())
 }
@@ -37,8 +54,8 @@ async fn fetch(url: &str, method: &str, body: Option<String>) -> Result<String, 
         opts.set_body(&wasm_bindgen::JsValue::from_str(&body_str));
     }
 
-    let request = Request::new_with_str_and_init(url, &opts)
-        .map_err(|error| format!("{error:?}"))?;
+    let request =
+        Request::new_with_str_and_init(url, &opts).map_err(|error| format!("{error:?}"))?;
 
     request
         .headers()

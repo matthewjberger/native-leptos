@@ -8,21 +8,31 @@ use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
 #[derive(Clone)]
-pub struct AuthLayer { enabled: bool }
+pub struct AuthLayer {
+    enabled: bool,
+}
 
 impl AuthLayer {
-    pub fn new(enabled: bool) -> Self { Self { enabled } }
+    pub fn new(enabled: bool) -> Self {
+        Self { enabled }
+    }
 }
 
 impl<S> Layer<S> for AuthLayer {
     type Service = AuthMiddleware<S>;
     fn layer(&self, inner: S) -> Self::Service {
-        AuthMiddleware { inner, enabled: self.enabled }
+        AuthMiddleware {
+            inner,
+            enabled: self.enabled,
+        }
     }
 }
 
 #[derive(Clone)]
-pub struct AuthMiddleware<S> { inner: S, enabled: bool }
+pub struct AuthMiddleware<S> {
+    inner: S,
+    enabled: bool,
+}
 
 impl<S> Service<Request<Body>> for AuthMiddleware<S>
 where
@@ -44,7 +54,10 @@ where
             if !enabled {
                 return inner.call(request).await;
             }
-            let auth_header = request.headers().get(http::header::AUTHORIZATION).and_then(|h| h.to_str().ok());
+            let auth_header = request
+                .headers()
+                .get(http::header::AUTHORIZATION)
+                .and_then(|h| h.to_str().ok());
             if validate_auth(auth_header) {
                 inner.call(request).await
             } else {
@@ -54,4 +67,6 @@ where
     }
 }
 
-fn validate_auth(_header: Option<&str>) -> bool { true }
+fn validate_auth(_header: Option<&str>) -> bool {
+    true
+}
