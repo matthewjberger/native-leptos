@@ -30,22 +30,14 @@ setup-gallery:
 # Setup all
 setup: setup-site setup-gallery
 
-# Format code
+# Format all code
 format:
-  cargo fmt
-  cd site; cargo fmt
-  cd ui; cargo fmt
-  cd component-gallery; cargo fmt
-  cd api; cargo fmt
-  cd api-types; cargo fmt
-  cd protocol; cargo fmt
+  cargo fmt --all
 
-# Lint code
+# Lint all code
 lint:
-  cargo clippy -- -D warnings
-  cd site; cargo clippy -- -D warnings
-  cd ui; cargo clippy -- -D warnings
-  cd component-gallery; cargo clippy -- -D warnings
-  cd api; cargo clippy -- -D warnings
-  cd api-types; cargo clippy -- -D warnings
-  cd protocol; cargo clippy -- -D warnings
+  cargo clippy --all -- -D warnings
+
+# Check all code
+check:
+  cargo check --all

@@ -394,7 +394,7 @@ fn ToggleShowcase() -> impl IntoView {
                 </div>
             </ShowcaseItem>
             <ShowcaseItem label="Selected value">
-                <span class="text-xl">{group_value}</span>
+                <span class="text-xl">{move || group_value.get()}</span>
             </ShowcaseItem>
         </ShowcaseSection>
     }

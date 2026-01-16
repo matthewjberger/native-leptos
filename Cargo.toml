@@ -1,7 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["."]
-exclude = ["site", "protocol", "api", "api-types", "ui", "component-gallery"]
+members = [".", "site", "protocol", "api", "api-types", "ui", "component-gallery"]
 
 [package]
 name = "native-leptos"
@@ -27,3 +26,9 @@ web_host_protocol = { path = "protocol" }
 rand = "0.9"
 
 [build-dependencies]
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"

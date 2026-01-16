@@ -7,8 +7,6 @@ license = "MIT OR Apache-2.0"
 edition = "2024"
 rust-version = "1.90"
 
-[workspace]
-
 [[bin]]
 name = "api-server"
 path = "src/main.rs"
